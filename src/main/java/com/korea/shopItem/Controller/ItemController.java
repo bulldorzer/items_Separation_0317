@@ -28,19 +28,30 @@ public class ItemController {
 
     // 페이징 목록 조회
     @GetMapping("/list")
-    public ResponseEntity<Page<ItemDTO>> getAllItems(){
-        return null;
+    public ResponseEntity<Page<ItemDTO>> getAllItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+            ){
+
+        Pageable pageable = PageRequest.of(page, size);
+        
+        return ResponseEntity.ok(itemService.getAllItems(pageable));
     }
 
     // 단일 데이터 조회
     @GetMapping("/{id}")
     public ResponseEntity<?> getItem(@PathVariable Long id) {
         try {
-            return null;
+            ItemDTO itemDTO = itemService.getOne(id);
+            return ResponseEntity.ok(itemDTO);
         } catch (IllegalArgumentException e) {
-            return null;
+            // 아이템이 존재하지 않는 경우 (404 NOT found)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("result", "fail", "error", e.getMessage()));
         } catch (Exception e) {
-            return null;
+            // 기타 예외처리 (500 Internal Server Error)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) // 500번에러
+                    .body(Map.of("result", "fail", "error", e.getMessage()));
         }
     }
 
@@ -50,10 +61,18 @@ public class ItemController {
     public ResponseEntity<?> getItemImages(@PathVariable String fileName) {
 
         try {
-            return null;
+            ResponseEntity<Resource> imageResponse = itemService.getImageUrlByFileName(fileName);
+            // ResponseEntity - 데이터 본문이 없으면 = 이미지데이터 없음
+            if (imageResponse == null || !imageResponse.hasBody()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("result", "fail", "error", "해당 파일을 찾을 수 없습니다."));
+            }
+            return imageResponse;
 
         }catch (Exception e) {
-            return null;
+            // 기타 예외처리 (500 Internal Server Error)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) // 500번에러
+                    .body(Map.of("result", "fail", "error", e.getMessage()));
         }
 
     }
@@ -62,32 +81,50 @@ public class ItemController {
     // 아이템 등록
     @PostMapping("/add")
     public ResponseEntity<ItemDTO> register(
+            ItemDTO itemDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
 
         try {
+            if (files != null && !files.isEmpty()){
+                List<String> uploadFileNames = fileUtil.saveFiles(files); // 저장하고 파일이름 추출
+                itemDTO.setUploadFileNames(uploadFileNames);
+            }
 
-            return null;
+            ItemDTO createdItem = itemService.createItem(itemDTO,files);
+
+            // 201 Created + 생성된 아이템 반환
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
 
 
         } catch (Exception e) {
-            return null;
+            // 기타 예외처리 (500 Internal Server Error)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) // 500번에러
+                    .body(null);
 
         }
     }
 
     // ✅ 아이템 수정
     @PutMapping("/modify/{id}")
-    public ResponseEntity<ItemDTO> updateItem() {
-        return null;
+    public ResponseEntity<ItemDTO> updateItem(
+            @PathVariable Long id,
+            @RequestBody ItemDTO itemDTO
+    ) {
+        ItemDTO updatedItem = itemService.updateItem(id,itemDTO);
+        return ResponseEntity.ok(updatedItem);
     }
 
     // ✅ 아이템 삭제 (논리 삭제)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteItem() {
+    public ResponseEntity<Map<String, String>> deleteItem(@PathVariable Long id) {
         try {
-            return null;
+            itemService.deleteItem(id);
+            Map<String, String> response = Map.of("result", "success");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return null;
+            Map<String, String> response = Map.of("result", "fail", "error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 

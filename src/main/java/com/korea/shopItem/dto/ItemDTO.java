@@ -62,6 +62,11 @@ public class ItemDTO {
         this.delFlag = item.isDelFlag();
 
         // 옵션 변환
+        // {"size" : ["S","M","L"]}
+        // Map<String,List<String> >
+        // size : S, size : M, size : L
+        // ItemOption.optionName : size, ItemOption.optionValue : S, M, L
+        // Collectors.groupingBy( 그룹화할 기준, Collectors.mapping(값들, 값들의 자료형) )
         this.options = (options != null && !options.isEmpty())
                 ? options.stream()
                 .collect(Collectors.groupingBy(

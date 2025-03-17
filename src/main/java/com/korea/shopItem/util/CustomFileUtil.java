@@ -48,6 +48,7 @@ public class CustomFileUtil {
         log.info(uploadPath);
     }
 
+    // 파일 저장해주고 이름값을 추출하여 반환함
     public List<String> saveFiles(List<MultipartFile> files) throws RuntimeException{
 
         List<String> uploadNames = new ArrayList<>();

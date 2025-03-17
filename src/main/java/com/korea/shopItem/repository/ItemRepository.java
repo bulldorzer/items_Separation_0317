@@ -12,10 +12,17 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
+    // 현재 이메소드는 아이템정보와 이미지목록을 같이 가져옴
     @EntityGraph(attributePaths = {"images"})
-    @Query("SELECT i FROM Item i WHERE i.delFlag = false")
+    @Query("SELECT i FROM Item i WHERE i.delFlag = false") // 삭제된거 제외
     Page<Item> findAllWithImages(Pageable pageable);
 
+    /*
+    * findById(아이템id)
+    * 이미지 같이 안옴
+    * 옵션 같이 안옴
+    * 인포 같이 옴( Iteminfo는 값타입이기때문)
+    */
 }
 
 
@@ -37,12 +44,3 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
 
  */
-
-
-
-
-
-
-
-
-
